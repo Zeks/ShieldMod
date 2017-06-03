@@ -590,7 +590,7 @@ function InitMeteors()
     local minSpacingAfterRaveBlock = 0.00
     local chainType 
     local impactDir
-  local nodeLeaders =  {}
+	local nodeLeaders =  {}
     local nodeValidity=  {}
     local chainLengths=  {}
     local tiltFactors= {}
@@ -608,16 +608,19 @@ function InitMeteors()
     nodeTypes['blue'].scale = blueScale
     nodeTypes['blue'].typeID = 0
     nodeTypes['blue'].mirrorTypeID = 1
+    nodeTypes['blue'].mirrorColor = 'red'
     
     nodeTypes['red'].color = redColor
     nodeTypes['red'].scale = redScale
     nodeTypes['red'].typeID = 1
-    nodeTypes['red'].mirrorTypeID = 0
+    nodeTypes['red'].mirrorTypeID = 0    
+    nodeTypes['red'].mirrorColor = 'blue'
     
     nodeTypes['purple'].color = purpleColor
     nodeTypes['purple'].scale = purpleScale
     nodeTypes['purple'].typeID = 2
     nodeTypes['purple'].mirrorTypeID = 2
+    nodeTypes['purple'].mirrorColor = 'purple'
     local adjustedZImpact
     function ValidNode(nodeIndex)
         local result = nodes[nodeIndex]~=nil and nodes[nodeIndex]~='run' and nodes[nodeIndex]~='dirty'
@@ -671,6 +674,168 @@ function InitMeteors()
         do return end
     end
     
+    
+    local firstPassResult = {}
+    firstPassResult.chainLengths = chainLengths
+    firstPassResult.nodeLeaders = nodeLeaders
+    firstPassResult.intensityFactors = intensityFactors
+    firstPassResult.myChainEndTimes = myChainEndTimes
+    firstPassResult.tiltFactors = tiltFactors
+    firstPassResult.nodeValidity = nodeValidity
+
+    local chainGroupStats = {}
+    local chainGroupLeaders = {}
+    local chainGroupIdsInChain= {}
+
+    local breakChainsAtXSingleNodes = 5
+    function CalculateChainDensities(firstPassResult)
+        calculateChainDensities = 0
+        local chainGroupCounter = 0
+        local singleNodeChainCounter = 0
+        local chainGroupLeader = -1
+        function GetStatsPrototype()
+            local statsForCurrentGroup = {}
+            statsForCurrentGroup.leader = -1
+            statsForCurrentGroup.chains = 0
+            statsForCurrentGroup.singleNodes = 0
+            statsForCurrentGroup.lastChain = 0
+            statsForCurrentGroup.nextChainLeader= 0
+            statsForCurrentGroup.ballChainRejectLimit = 1
+            return statsForCurrentGroup
+        end 
+        local statsForCurrentGroup = GetStatsPrototype()
+        local latestChainLeader = -1
+        local lastChain = -1
+        local indexer = 0
+        while indexer<=#nodeLeaders do
+            indexer = indexer + 1
+            i = nodeLeaders[indexer]
+            if i == -1 or indexer ~= i then 
+            -- do nothing
+            else
+
+                -- first, we determine if that's a single note or a chain and increase current group accordingly
+                if firstPassResult.chainLengths[i] > 1 then
+                    statsForCurrentGroup.chains=statsForCurrentGroup.chains+1
+                    chainGroupIdsInChain[i] = chainGroupCounter
+                    chainGroupCounter=chainGroupCounter+1
+                    lastChain = i
+                  --chainGroupStats[i] = statsForCurrentGroup
+                else
+                    statsForCurrentGroup.singleNodes=statsForCurrentGroup.singleNodes+1
+                end
+                -- next we assign a leader to current group
+                if firstPassResult.chainLengths[i] > 1 and chainGroupLeader == -1 then
+                    if latestChainLeader > 0 and chainGroupStats[latestChainLeader] ~= nil then
+                        chainGroupStats[latestChainLeader].nextChainLeader = i
+                    end
+                    chainGroupLeader = i
+                    latestChainLeader = i
+                    statsForCurrentGroup.leader = chainGroupLeader
+                end
+
+
+                -- if we reached the threshold we cut this chain group at this point
+                if singleNodeChainCounter > breakChainsAtXSingleNodes then
+                    statsForCurrentGroup.lastChain = lastChain
+
+                    if statsForCurrentGroup.chains > 5 then
+                        statsForCurrentGroup.ballChainRejectLimit = 2
+                    end
+
+                    if statsForCurrentGroup.chains > 7 then
+                        statsForCurrentGroup.ballChainRejectLimit = 2
+                    end
+
+                    if statsForCurrentGroup.chains > 10 then
+                        statsForCurrentGroup.ballChainRejectLimit = 3
+                    end
+
+
+                    chainGroupStats[chainGroupLeader] = statsForCurrentGroup
+                    statsForCurrentGroup = GetStatsPrototype()
+                    chainGroupLeader = -1
+                    singleNodeChainCounter = 0
+                    chainGroupCounter = 0
+                end
+
+                if chainGroupLeader == -1 and firstPassResult.chainLengths[i] == 1 then
+                  --skipping processing if this node can't be a leader
+                else
+                    chainGroupLeaders[i] = chainGroupLeader
+                    if firstPassResult.chainLengths[i] == 1 then
+                        singleNodeChainCounter=singleNodeChainCounter+1
+                    end
+                end  
+
+            end
+        end
+    end
+    function AssignBallChain(i,mirrorThisChain,chainType, chainLength, intensityFactor)    
+        assignBallChain = 0
+        
+        if mirrorThisChain or chainType =='purple' then
+        --if chainType =='purple' then
+            return false, false
+        end
+        if chainLength < 3 then
+            return false, false
+        end
+
+        if (chainLength>4) and (intensityFactor<.6) then
+            isBallChain = true
+        end
+
+        if (chainLength>4) and (intensityFactor<.9) then
+            isBallChain = true
+        end
+
+        if isBallChain and chainLengths[nodeLeaders[i]]>66 then
+            isExtraLongBallChain = true
+        end
+        -- we dont need to limit short chains
+        --if true then return isBallChain,isExtraLongBallChain end
+        if chainGroupLeaders[i] ~= nil and chainGroupStats[chainGroupLeaders[i]] ~= nil and chainGroupStats[chainGroupLeaders[i]].chains < 3 then
+            return isBallChain,isExtraLongBallChain
+        end
+
+        local firstValue = 0
+        local secondValue = 0
+        local thirdValue = 0
+        local nextLeader = i
+        if nextChainStarters[nextLeader] ~= nil then
+            firstValue = nextChainStarters[nextLeader]
+            nextLeader = nextChainStarters[nextLeader]
+        end
+        if nextChainStarters[nextLeader] ~= nil then
+            secondValue = nextChainStarters[nextLeader]
+            nextLeader  = nextChainStarters[nextLeader]
+        end
+        if nextChainStarters[nextLeader] ~= nil then
+            thirdValue = nextChainStarters[nextLeader]
+            nextLeader = nextChainStarters[nextLeader]
+        end
+        local seed = firstValue + secondValue + thirdValue
+
+        --by default ballchains are rejected
+        local rejectBallChain = true
+            if chainGroupLeaders[i] ~= nil and chainGroupStats[chainGroupLeaders[i]] ~= nil and (seed % chainGroupStats[chainGroupLeaders[i]].ballChainRejectLimit) == 0 then
+            rejectBallChain = false
+        end 
+        if rejectBallChain then
+            isBallChain = false
+            isExtraLongBallChain = false
+        end
+
+        if (chainLength>11) and (intensityFactor<.6) then
+            isBallChain = true
+        end
+        if (chainLength>22) and (intensityFactor<.9) then
+            isBallChain = true
+        end
+
+        return isBallChain,isExtraLongBallChain
+    end
     function InitNewChain(i)
         isBallChain = false -- most of them are squids, not ball chains
         isExtraLongBallChain = false
@@ -698,11 +863,16 @@ function InitMeteors()
         local bound2 = math.max(0, math.min(1, math.pow(( ((colorSpanX + colorMinX - impactX) / delta) - minAccelRight) / maxAccelRight, 1/factAccelRight) ))
         local modRand = rand()*(bound1+bound2)-bound1
 
-        if (modRand < 0) then
-            impactX = impactX - (minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
+        local addition = 0
+        if modRand < 0 then
+            addition = -1*(minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
         else
-            impactX = impactX + (minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
+            addition = (minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
         end
+        if math.abs(addition/delta) > 5 then
+            addition= addition < 0 and -5*delta or 5*delta
+        end
+        impactX = impactX + addition;
         prevNodePosition = impactX
         return prevNodePosition, prevNodeTime, impactX
     end
@@ -718,9 +888,14 @@ function InitMeteors()
     
     
     --function AssignMeteor(i,impactX, typeId, scale,adjustedImpactY, adjustedZImpact, curveFactorX,  color,yCurve)
-    function AssignMeteor(i,impactX, typeID, scale,adjustedImpactY, adjustedZImpact, curveFactorX,  innerColor,yCurve)
+    function AssignMeteor(i,impactX, typeID, scale,adjustedImpactY, adjustedZImpact, curveFactorX,  innerColor,yCurve, colorType)
         meteorNodes[#meteorNodes+1] = i
         meteorDirections[#meteorDirections+1] = headingNormalized -- {math.random() - .5, 0, math.random() - .5} -- the game normalizes these for us
+        if colorType == 'red' then
+            prevRedPosition = impactX / impactX_Scaler
+        elseif colorType == 'blue' then
+            prevBluePosition = impactX / impactX_Scaler
+        end
         meteorImpacts[#meteorImpacts+1] = {impactX, adjustedImpactY, adjustedZImpact}
         meteorScales[#meteorScales+1] = scale
         meteorCurveMaximums[#meteorCurveMaximums+1] = fif(isGroundTroop,{0,0,0},{impactX*curveFactorX, yCurve, 0})--impactY*60
@@ -752,14 +927,15 @@ function InitMeteors()
                                         impactX, typeID, scale, color,
                                         mirrorTypeID, mirrorScale, mirrorColor)
         --print("IX"..impactX)
-        assignMeteorFunc(i, impactX, typeID, scale,adjustedImpactY, adjustedZImpact, curveFactorX,color,yCurve)
+        assignMeteorFunc(i, impactX, typeID, scale,adjustedImpactY, adjustedZImpact, curveFactorX,color,yCurve, chainType)
         if mirrorThisChain then
             local mirrorImpactX = -1*impactX
             if xMirrorOffset ~= 0 then
                 mirrorImpactX = impactX + xMirrorOffset
             end
             lg:log("Creating a mirror node "..i.." of color: ("..mirrorColor[1].." "..mirrorColor[2].." "..mirrorColor[3]..") ")
-            assignMeteorFunc(i, mirrorImpactX, mirrorTypeID, mirrorScale,adjustedImpactY, adjustedZImpact, curveFactorX, mirrorColor,yCurve)
+            assignMeteorFunc(i, mirrorImpactX, mirrorTypeID, mirrorScale,adjustedImpactY, adjustedZImpact, curveFactorX, mirrorColor,yCurve,
+            nodetypes[chainType].mirrorColor)
         end
     end
     function ValidNodeInLongChain(isExtraLongBallChain,idInThisChain, divisionFactor)
@@ -797,23 +973,7 @@ function InitMeteors()
     
         return prevBlockImpactX
     end
-    function AssignBallChain(i,mirrorThisChain,chainType, chainLength, intensityFactor)    
-        if (not mirrorThisChain) and (chainType~='purple') then
-            -- intentionally blank
-            if (chainLength>11) and (intensityFactor<.6) then
-                isBallChain = true
-            end
-            if (chainLength>22) and (intensityFactor<.9) then
-                isBallChain = true
-            end
-        end
         
-        if isBallChain and chainLengths[nodeLeaders[i]]>66 then
-            isExtraLongBallChain = true
-        end
-        return isBallChain,isExtraLongBallChain
-    end
-    
     function DoMirror(i, forceMirrorOn, chainType, impactX)
         if chainType == 'purple' then
             return impactX
@@ -975,6 +1135,7 @@ function InitMeteors()
     -- END OF AUXILIARY FUNCTION BLOCK. 
     -- //////////////////////////////////////////////////
     CalculateChainsAndIntensities()
+    CalculateChainDensities(firstPassResult)
 --    for i=1,#chainLengths do
 --        local nodeLeaderIsNil = nodeLeaders[i] == nil
 --        if nodeLeaders[i] < 0 then
