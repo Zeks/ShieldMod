@@ -590,7 +590,7 @@ function InitMeteors()
     local minSpacingAfterRaveBlock = 0.00
     local chainType 
     local impactDir
-	local nodeLeaders =  {}
+    local nodeLeaders =  {}
     local nodeValidity=  {}
     local chainLengths=  {}
     local tiltFactors= {}
@@ -982,8 +982,8 @@ function InitMeteors()
             if chainType=='blue' then
                 prevBluePosition = impactX
                 prevRedPosition = -impactX
-				mirrorScale = redScale
-				mirrorColor = redColor
+                mirrorScale = redScale
+                mirrorColor = redColor
                 
             else
                 prevBluePosition = -impactX
@@ -1083,13 +1083,13 @@ function InitMeteors()
             prevBlueTime = myChainEndTimes[nodeLeaders[i] ]
         elseif (intensityFactors[i] > .75) and (rand() < doubleFactor) then 
             if chainType=='blue' then
-			    mirrorScale = redScale
+                mirrorScale = redScale
                 mirrorColor = redColor
                 mirrorThisChain, prevRedPosition, prevRedTime = CalculateNaturalMirror(i,prevRedTime,prevRedPosition,redMinX, redSpanX, impactX)
             else
                 mirrorScale = blueScale
                 mirrorColor = blueColor
-				mirrorThisChain, prevBluePosition, prevBlueTime = CalculateNaturalMirror(i,prevBlueTime,prevBluePosition,-1*blueMaxX, blueSpanX, impactX)
+                mirrorThisChain, prevBluePosition, prevBlueTime = CalculateNaturalMirror(i,prevBlueTime,prevBluePosition,-1*blueMaxX, blueSpanX, impactX)
             end
         end
         return impactX
