@@ -879,7 +879,7 @@ function InitMeteors()
     function CalculateImpactForRaveChainStarter(i, prevRedTime, prevRedPosition,prevBlueTime, prevBluePosition, impactX)
         local blueImpact = 0
         local redImpact = 0
-        prevBluePosition, prevBlueTime, blueImpact = CalculateImpactForNormalChainStarter(i, prevBlueTime, prevBluePosition, blueMinX, blueSpanX, impactX)
+        prevBluePosition, prevBlueTime, blueImpact = CalculateImpactForNormalChainStarter(i, prevBlueTime, prevBluePosition, -1*blueMaxX, blueSpanX, impactX)
         prevRedPosition, prevRedTime, redImpact = CalculateImpactForNormalChainStarter(i, prevRedTime, prevRedPosition, redMinX, redSpanX, impactX)
         impactX = blueImpact + redImpact / 2
         return impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime
