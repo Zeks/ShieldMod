@@ -608,19 +608,19 @@ function InitMeteors()
     nodeTypes['blue'].scale = blueScale
     nodeTypes['blue'].typeID = 0
     nodeTypes['blue'].mirrorTypeID = 1
-    nodeTypes['blue'].mirrorColor = 'red'
+    nodeTypes['blue'].mirrorColorName = 'red'
     
     nodeTypes['red'].color = redColor
     nodeTypes['red'].scale = redScale
     nodeTypes['red'].typeID = 1
     nodeTypes['red'].mirrorTypeID = 0    
-    nodeTypes['red'].mirrorColor = 'blue'
+    nodeTypes['red'].mirrorColorName = 'blue'
     
     nodeTypes['purple'].color = purpleColor
     nodeTypes['purple'].scale = purpleScale
     nodeTypes['purple'].typeID = 2
     nodeTypes['purple'].mirrorTypeID = 2
-    nodeTypes['purple'].mirrorColor = 'purple'
+    nodeTypes['purple'].mirrorColorName = 'purple'
     local adjustedZImpact
     function ValidNode(nodeIndex)
         local result = nodes[nodeIndex]~=nil and nodes[nodeIndex]~='run' and nodes[nodeIndex]~='dirty'
@@ -926,7 +926,6 @@ function InitMeteors()
     function AssignMeteorAndMirror(assignMeteorFunc,i, adjustedImpactY, adjustedZImpact, curveFactorX, yCurve,
                                         impactX, typeID, scale, color,
                                         mirrorTypeID, mirrorScale, mirrorColor)
-        --print("IX"..impactX)
         assignMeteorFunc(i, impactX, typeID, scale,adjustedImpactY, adjustedZImpact, curveFactorX,color,yCurve, chainType)
         if mirrorThisChain then
             local mirrorImpactX = -1*impactX
@@ -935,7 +934,7 @@ function InitMeteors()
             end
             lg:log("Creating a mirror node "..i.." of color: ("..mirrorColor[1].." "..mirrorColor[2].." "..mirrorColor[3]..") ")
             assignMeteorFunc(i, mirrorImpactX, mirrorTypeID, mirrorScale,adjustedImpactY, adjustedZImpact, curveFactorX, mirrorColor,yCurve,
-            nodetypes[chainType].mirrorColor)
+            nodeTypes[chainType].mirrorColorName)
         end
     end
     function ValidNodeInLongChain(isExtraLongBallChain,idInThisChain, divisionFactor)
@@ -983,8 +982,8 @@ function InitMeteors()
             if chainType=='blue' then
                 prevBluePosition = impactX
                 prevRedPosition = -impactX
-                mirrorScale = redScale
-                mirrorColor = redColor
+				mirrorScale = redScale
+				mirrorColor = redColor
                 
             else
                 prevBluePosition = -impactX
@@ -1084,9 +1083,13 @@ function InitMeteors()
             prevBlueTime = myChainEndTimes[nodeLeaders[i] ]
         elseif (intensityFactors[i] > .75) and (rand() < doubleFactor) then 
             if chainType=='blue' then
+			    mirrorScale = redScale
+                mirrorColor = redColor
                 mirrorThisChain, prevRedPosition, prevRedTime = CalculateNaturalMirror(i,prevRedTime,prevRedPosition,redMinX, redSpanX, impactX)
             else
-                mirrorThisChain, prevBluePosition, prevBlueTime = CalculateNaturalMirror(i,prevBlueTime,prevBluePosition,blueMinX, blueSpanX, impactX)
+                mirrorScale = blueScale
+                mirrorColor = blueColor
+				mirrorThisChain, prevBluePosition, prevBlueTime = CalculateNaturalMirror(i,prevBlueTime,prevBluePosition,-1*blueMaxX, blueSpanX, impactX)
             end
         end
         return impactX
