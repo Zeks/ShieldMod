@@ -430,7 +430,7 @@ meteorTypes_tails = {}
 function OnTrafficCreated(theTraffic)
     traffic = theTraffic --store globally
     lg = CreateLogger()
-    lg.enabled = true
+    lg.enabled = false
     -- \mod
     math.randomseed(math.floor(track[#track].seconds * 10000000000))
     --math.randomseed(11)
