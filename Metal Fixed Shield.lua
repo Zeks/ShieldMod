@@ -134,11 +134,11 @@ function CreateLogger (logLevel)
     return lg
 end
 
-maxAccelLeft = 10      -- Left hand max acceleration => change this if too fast
-factAccelLeft = 0.45   -- Left hand factor - shouldn't touch
+maxAccelLeft = 7      -- Left hand max acceleration => change this if too fast
+factAccelLeft = 0.6   -- Left hand factor - shouldn't touch
 minAccelLeft = 0      -- Left hand min acceleration - mustn't touch
-maxAccelRight = 10     -- Right hand max acceleration => change this if too fast
-factAccelRight = 0.45  -- Right hand factor - shouldn't touch
+maxAccelRight = 7     -- Right hand max acceleration => change this if too fast
+factAccelRight = 0.6  -- Right hand factor - shouldn't touch
 minAccelRight = 0     -- Right hand min acceleration - mustn't touch
 
 impactX_Scaler = 1.6  -- Armspan multiplier => change this if too wide
@@ -879,9 +879,10 @@ function InitMeteors()
     function CalculateImpactForRaveChainStarter(i, prevRedTime, prevRedPosition,prevBlueTime, prevBluePosition, impactX)
         local blueImpact = 0
         local redImpact = 0
+        impactX = (prevBluePosition + prevRedPosition) / 2
+        
         prevBluePosition, prevBlueTime, blueImpact = CalculateImpactForNormalChainStarter(i, prevBlueTime, prevBluePosition, -1*blueMaxX, blueSpanX, impactX)
         prevRedPosition, prevRedTime, redImpact = CalculateImpactForNormalChainStarter(i, prevRedTime, prevRedPosition, redMinX, redSpanX, impactX)
-        impactX = (blueImpact + redImpact) / 2
         return impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime
     end
     
@@ -1210,7 +1211,7 @@ function InitMeteors()
                 -- scale horizontal impacts by armspan
                 impactX = impactX * impactX_Scaler -- 1.7
                 -- adjust calculated y impact point to be above chest height
-                impactY_BeyondChestHeight = (tiltFactors[i])*(tiltFactors[i])*yImpactSpan + rand()*yImpactSpan_MaxRandomExtra
+                impactY_BeyondChestHeight = (tiltFactors[i]/1.5)*(tiltFactors[i]/1.5)*yImpactSpan + rand()*yImpactSpan_MaxRandomExtra
                 impactY = chestHeight + impactY_BeyondChestHeight
                 
                 impactDir = {impactX, impactY_BeyondChestHeight, 0}
