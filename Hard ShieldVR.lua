@@ -134,11 +134,11 @@ function CreateLogger (logLevel)
     return lg
 end
 
-maxAccelLeft = 10      -- Left hand max acceleration => change this if too fast
-factAccelLeft = 0.45   -- Left hand factor - shouldn't touch
+maxAccelLeft = 7      -- Left hand max acceleration => change this if too fast
+factAccelLeft = 0.6   -- Left hand factor - shouldn't touch
 minAccelLeft = 0      -- Left hand min acceleration - mustn't touch
-maxAccelRight = 10     -- Right hand max acceleration => change this if too fast
-factAccelRight = 0.45  -- Right hand factor - shouldn't touch
+maxAccelRight = 7     -- Right hand max acceleration => change this if too fast
+factAccelRight = 0.6  -- Right hand factor - shouldn't touch
 minAccelRight = 0     -- Right hand min acceleration - mustn't touch
 
 impactX_Scaler = 1.6  -- Armspan multiplier => change this if too wide
