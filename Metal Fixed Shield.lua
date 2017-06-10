@@ -873,6 +873,7 @@ function InitMeteors()
             addition= addition < 0 and -5*delta or 5*delta
         end
         impactX = impactX + addition;
+        impactX= impactX < 0 and -1*math.min(math.abs(impactX), 0.5) or math.min(math.abs(impactX), 0.5)
         prevNodePosition = impactX
         return prevNodePosition, prevNodeTime, impactX
     end

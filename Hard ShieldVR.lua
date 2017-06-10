@@ -862,17 +862,23 @@ function InitMeteors()
         local bound1 = math.max(0, math.min(1, math.pow(( ((impactX - colorMinX) / delta) - minAccelRight) / maxAccelRight, 1/factAccelRight) ))
         local bound2 = math.max(0, math.min(1, math.pow(( ((colorSpanX + colorMinX - impactX) / delta) - minAccelRight) / maxAccelRight, 1/factAccelRight) ))
         local modRand = rand()*(bound1+bound2)-bound1
-
+        
         local addition = 0
         if modRand < 0 then
             addition = -1*(minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
         else
             addition = (minAccelRight + maxAccelRight * math.pow(math.abs(modRand), factAccelRight)) * delta
         end
-        if math.abs(addition/delta) > 5 then
-            addition= addition < 0 and -5*delta or 5*delta
+        if math.abs(addition/delta) > 6 then
+            addition= addition < 0 and -6*delta or 6*delta
         end
+
         impactX = impactX + addition;
+        impactX= impactX < 0 and -1*math.min(math.abs(impactX), 0.5) or math.min(math.abs(impactX), 0.5)
+        if math.abs(impactX) > 2 then
+            lg:log("CIN: Delta:"..delta.." PrevTime: "..prevNodeTime.." PrevPosition: "..prevNodePosition.." Addition: "..addition.." modRand: "..modRand)
+        end
+        
         prevNodePosition = impactX
         return prevNodePosition, prevNodeTime, impactX
     end
@@ -892,8 +898,10 @@ function InitMeteors()
         meteorNodes[#meteorNodes+1] = i
         meteorDirections[#meteorDirections+1] = headingNormalized -- {math.random() - .5, 0, math.random() - .5} -- the game normalizes these for us
         if colorType == 'red' then
+            lg:log("RN: ".." Ix: "..impactX.." Sc: "..impactX_Scaler)
             prevRedPosition = impactX / impactX_Scaler
         elseif colorType == 'blue' then
+            lg:log("BN: ".." Ix: "..impactX.." Sc: "..impactX_Scaler)
             prevBluePosition = impactX / impactX_Scaler
         end
         meteorImpacts[#meteorImpacts+1] = {impactX, adjustedImpactY, adjustedZImpact}
@@ -1183,20 +1191,24 @@ function InitMeteors()
                 InitNewChain(i)
                 -- calculate impacts for chain starters
                 if nodes[i] == 'red' then
-                    lg:log("In data red Node: "..i.." prevRedTime:"..pad(prevRedTime,25," ").." prevRedPosition: "..pad(prevRedPosition,25," ").." impactX: "..pad(impactX,15," "))
+                    --lg:log("In data red Node: "..i.." prevRedTime:"..pad(prevRedTime,25," ").." prevRedPosition: "..pad(prevRedPosition,25," ").." impactX: "..pad(impactX,15," "))
+                    local storedPreviousImpact = prevRedPosition
+                    local storedPreviousTime = prevRedTime
                     prevRedPosition, prevRedTime, impactX = CalculateImpactForNormalChainStarter(i,prevRedTime,prevRedPosition,redMinX, redSpanX, impactX)
                     --print("Node: "..i.."ImpactX:"..impactX.."Pre Node: "..prevRedPosition)
                     --lg::log("Node: "..i.."ImpactX:"..impactX.."Pre Node: "..prevRedPosition)
-                    lg:log("Node: "..i.." ImpactX:"..pad(impactX,25," ").." Pre Node: "..pad(prevRedPosition,25," ").." Pre time: "..pad(prevRedTime,15," "))
+                    lg:log("Red  Node: "..i.." ImpactX:"..pad(impactX,25," ").." Pre Node: "..pad(storedPreviousImpact,25," ").." Td: "..pad(track[i].seconds - storedPreviousTime,15," "))
                 elseif nodes[i] == 'blue' then
-                    lg:log("In data blue Node: "..i.." prevRedTime:"..pad(prevBlueTime,25," ").." prevRedPosition: "..pad(prevBluePosition,25," ").." impactX: "..pad(impactX,15," "))
+                    local storedPreviousImpact = prevBluePosition
+                    local storedPreviousTime = prevBlueTime
+                    --lg:log("In data blue Node: "..i.." prevRedTime:"..pad(prevBlueTime,25," ").." prevRedPosition: "..pad(prevBluePosition,25," ").." impactX: "..pad(impactX,15," "))
                     prevBluePosition, prevBlueTime, impactX = CalculateImpactForNormalChainStarter(i,prevBlueTime,prevBluePosition,-1*blueMaxX, -1*blueSpanX,impactX)
                     --print("Node: "..i.."ImpactX:"..impactX.."Pre Node: "..prevBluePosition)
                     --lg:log("Node: "..i.." ImpactX:"..impactX.." Pre Node: "..prevBluePosition.." Pre time: "..prevBlueTime)
-                    lg:log("Node: "..i.." ImpactX:"..pad(impactX,25," ").." Pre Node: "..pad(prevBluePosition,25," ").." Pre time: "..pad(prevBlueTime,15," "))
+                    lg:log("Blue Node: "..i.." ImpactX:"..pad(impactX,25," ").." Pre Node: "..pad(storedPreviousImpact,25," ").." Td: "..pad(track[i].seconds - storedPreviousTime,15," "))
                 else
                     lg:log("In data doing rave")
-                    impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime = CalculateImpactForRaveChainStarter(i,prevRedTime, prevRedPosition,prevBlueTime,prevBluePosition,impactX)
+                    --impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime = CalculateImpactForRaveChainStarter(i,prevRedTime, prevRedPosition,prevBlueTime,prevBluePosition,impactX)
                 end
                 
                 
@@ -1246,7 +1258,7 @@ function InitMeteors()
         
             
                 impactX = DoMirror(i, forceMirrorOn, chainType, impactX)
-                lg:log("Node: "..i.." MImpactX: ".. pad(impactX,25," "))
+                --lg:log("Node: "..i.." MImpactX: ".. pad(impactX,25," "))
         
                 --DoMirror(i, forceMirrorOn, chainType, impactX)
                 -- assign some aprameters based on chain leader node type
