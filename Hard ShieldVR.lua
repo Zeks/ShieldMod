@@ -1208,7 +1208,7 @@ function InitMeteors()
                     lg:log("Blue Node: "..i.." ImpactX:"..pad(impactX,25," ").." Pre Node: "..pad(storedPreviousImpact,25," ").." Td: "..pad(track[i].seconds - storedPreviousTime,15," "))
                 else
                     lg:log("In data doing rave")
-                    --impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime = CalculateImpactForRaveChainStarter(i,prevRedTime, prevRedPosition,prevBlueTime,prevBluePosition,impactX)
+                    impactX,prevBluePosition,prevRedPosition,prevBlueTime,prevRedTime = CalculateImpactForRaveChainStarter(i,prevRedTime, prevRedPosition,prevBlueTime,prevBluePosition,impactX)
                 end
                 
                 
